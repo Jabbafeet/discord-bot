@@ -28,9 +28,7 @@ async function main(){
 
   } catch (e) {
       console.error(e);
-  } /*finally {
-      await mClient.close();
-  }*/
+  }
 
 
   async function listDatabases(mClient){
@@ -90,7 +88,7 @@ async function main(){
       switch (switchArg) {
           case 'help':
           message.reply('Youve indicated that you wanted help.');
-          goodMsg.push(argument); //adds this message's content to an array. This will be used later to send information to a database for the mobiel app to read
+          goodMsg.push(argument); //adds this message's content to an array. This will be used later to send information to a database for the app(React Page) to read
           wG = true;
           break;
 
@@ -170,5 +168,8 @@ async function main(){
       }
     }
   });
+})
 }
+
+
 main().catch(console.error);
