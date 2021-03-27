@@ -42,7 +42,7 @@ async function main(){
 
   client.on("message", function(message){
     const guild = message.guild;
-
+    if(message.author.bot) return; //Looks to see if the author of message is another bot, If it is dont go any further
     //Gets IDs for both channel headings to create channels later
     message.guild.channels.cache.forEach((val, inx) =>{
       const channelName = val.name;
@@ -59,8 +59,6 @@ async function main(){
         console.log("Name", val.name)
         console.log("type", val.type)
     });*/
-
-
     const messageAuthor = message.author.username;
     var switchArg="none";
     if(message.author.bot) return; //Looks to see if the author of message is another bot, If it is dont go any further
