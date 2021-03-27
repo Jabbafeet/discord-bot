@@ -54,14 +54,11 @@ async function main(){
         textChannel = inx;
         console.log("\nLogged Text Channels " +textChannel + "\n");
       }
-      /* Logging all Id's in guild, Un-needed in final product
-        console.log("ID: ", inx)
-        console.log("Name", val.name)
-        console.log("type", val.type)
-    });*/
+    })
+
+
     const messageAuthor = message.author.username;
     var switchArg="none";
-    if(message.author.bot) return; //Looks to see if the author of message is another bot, If it is dont go any further
     console.log(messageAuthor);
     if (!message.content.startsWith(prefix)){
       const argument = message.content;
@@ -166,8 +163,8 @@ async function main(){
       }
     }
   });
-})
 }
+
 
 
 main().catch(console.error);
