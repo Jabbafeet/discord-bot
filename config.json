@@ -1,3 +1,4 @@
 {
-  "BOT_TOKEN": "Nzk4MjA3OTQzNTM1MzYyMDgx.X_xrEw.UGq19lDGZQ_wvexZBhrHwrXuTkY"
+  "BOT_TOKEN": "Nzk4MjA3OTQzNTM1MzYyMDgx.X_xrEw.UGq19lDGZQ_wvexZBhrHwrXuTkY",
+  "URI": "mongodb+srv://Karl:discord@cluster0.c2iuu.mongodb.net/test"
 }
