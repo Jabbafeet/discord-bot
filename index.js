@@ -8,11 +8,13 @@ const dbName = "discordBot";
 const prefix = "!";
 const uri = config.URI;
 const mClient = new MongoClient(uri);
+var welcomeChannel = '';
 //const guild = client.guilds.cache.get("822444306069585960");  Guild ID used before I learned how to grab guild ID's from messages (Depreciated)
 var voiceChannel = '';
 var textChannel = '';
 var i = 0;
 var wG = null;
+var creationBool = false;
 client.login(config.BOT_TOKEN);
 
 async function main(){
@@ -40,6 +42,20 @@ async function main(){
   client.on("message", function(message){
     const guild = message.guild;
     if(message.author.bot) return; //Looks to see if the author of message is another bot, If it is dont go any further
+
+    message.guild.channels.cache.forEach((val, inx) =>{
+       i++;
+       console.log("" + i);
+    })
+    if (i>5){
+      creationBool=true;
+      console.log("im here in True");
+      i=0;
+    }else {
+      creationBool=false;
+      console.log("im here in False");
+      i=0;
+    }
 
     //Gets IDs for both channel headings to create channels later
   /*  message.guild.channels.cache.forEach((val, inx) =>{
@@ -106,7 +122,9 @@ async function main(){
           wG = null;
         }
 
-       } else {
+       }
+       //ELSE GO TO COMMANDS (!commands)
+       else {
       const commandBody = message.content.slice(prefix.length);
       const args = commandBody.split(' '); //splits up the string to find command/etc
       const command = args.shift().toLowerCase(); //moves everything to lower case
@@ -157,25 +175,64 @@ async function main(){
       }catch(e){
           console.error(e);
         }
+        i=0;
       }
       //Command for building the server, adding channels under headings etc
       else if (command === "buildserver"){
-          message.guild.channels.cache.forEach((val, inx) =>{
-          const channelName = val.name;
+        //Creates the channels if not all are made etc, Counts channels
+        /*console.log("I am " +creationBool);*/
+          if (!creationBool){
+          //creates and gives admin role for later use
+           guild.roles.create({
+                    data: {
+                    name: 'Administrator',
+                    color: 'BLUE',
+              },
+              reason: 'Creating role for admin',
+            })
+            .then(console.log)
+            .catch(console.error);
 
-          if (channelName === "Voice Channels"){
-            voiceChannel = inx;
-            console.log("\nLogged voice channel " +voiceChannel + "\n");
-          } else if (channelName === "Text Channels"){
-            textChannel = inx;
-            console.log("\nLogged Text Channels " +textChannel + "\n");
-          }
-        })
+            //gives user the role for later use, only want admin/server owner to be able to add topics
+            let role = message.guild.roles.cache.find(role => role.name ==="Administrator");
+            let member = message.member;
+            member.roles.add("" + role).catch(console.error);
 
-          guild.channels.create("testVoice", { parent: voiceChannel, type: "voice", reason: "logging new channel"})
-          .then(console.log)
-          .catch(console.error);
+            //for each channel finds the ID for voice channels heading and text channels heading
+            message.guild.channels.cache.forEach((val, inx) =>{
+            const channelName = val.name;
+
+            if (channelName === "Voice Channels"){
+              voiceChannel = inx;
+              console.log("\nLogged voice channel " +voiceChannel + "\n");
+            } else if (channelName === "Text Channels"){
+              textChannel = inx;
+              console.log("\nLogged Text Channels " +textChannel + "\n");
+            }
+          })
+
+          guild.channels.create("Welcome", { parent: textChannel, type: "text", permissionOverwrites:[{id:"" + guild, deny: ['SEND_MESSAGES']}], reason: "logging new channel"})
+          .then(channel => channel.send("Hi there, This area is to give a short description of how this bot works and how the channels below work.\n Be sure to talk about all homework issues in the homework help channel, This bot will check every channel but it specifically uses the homework help channel to compile help or giving help requests"))
+          guild.channels.create("General Chat", { parent: textChannel, type: "text", reason: "logging new channel"})
+          guild.channels.create("Homework Help", { parent: textChannel, type: "text", reason: "logging new channel"})
+          guild.channels.create("Homework Chat (voice)", { parent: voiceChannel, type: "voice", reason: "logging new channel"})
+            .then(console.log)
+            .catch(console.error);
+          //  client.channels.get("<ID of the channel you want to send to>").send("<your message content here>")
+          //client.channels.get(welcomeChannel).send("Your message");
+          message.reply("completed channel creation");
+          message.channel.delete();
+          creationBool = true;
+        } else if (creationBool) {
+          message.reply("already created channels here, Or you have set the channel up already\n If you'd like to have the bot make them automatically please delete all channels and use !buildserver");
+        } else{
+          message.reply("uhoh");
+        }
       }
+
+      /*else if (command === "compare"){ //This was to find out that the ID for everyone role in discord is the same as Guild ID, which is needed to make permissions
+        message.reply("Id I just found 832313590467788824 vs ID: " + guild);
+      }*/
 
       // Built in bot command to remove all documents in DB/Col
       else if (command === "purge"){
@@ -207,6 +264,13 @@ async function main(){
 
         })
         //const col= db.collection("discordBot");
+      }
+      else if (command === "topics"){
+         if (message.member.roles.cache.find(r=>r.name==="Administrator")){
+           message.reply("good");
+         }else{
+           message.reply("bad");
+         }
       }
 
       else{
