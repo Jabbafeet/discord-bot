@@ -4,6 +4,7 @@ const {MongoClient} = require('mongodb');
 const client = new Discord.Client();
 const goodMsg = [];
 const badMsg = [];
+const topics = [];
 const dbName = "discordBot";
 const prefix = "!";
 const uri = config.URI;
@@ -108,14 +109,16 @@ async function main(){
         }
 
 
-      if (msg.includes("give") || msg.includes("help")){
+      if (msg.includes("give") || msg.includes("help") || topics.indexOf(message.content) !=-1){
           const db = mClient.db(dbName);
           const col = db.collection("discordBot");
           console.log("in writeDB");
           let userMessage = {
             "username": messageAuthor,
             "message": msg,
-            "give/help": wG
+            "give/help": wG,
+            "topic": topics[topics.indexOf(message.content)]
+            //"channel":
           }
           const p = col.insertOne(userMessage);
           console.log(userMessage);
@@ -215,9 +218,13 @@ async function main(){
           .then(channel => channel.send("Hi there, This area is to give a short description of how this bot works and how the channels below work.\n Be sure to talk about all homework issues in the homework help channel, This bot will check every channel but it specifically uses the homework help channel to compile help or giving help requests"))
           guild.channels.create("General Chat", { parent: textChannel, type: "text", reason: "logging new channel"})
           guild.channels.create("Homework Help", { parent: textChannel, type: "text", reason: "logging new channel"})
+          guild.channels.create("Off-Topic", { parent: textChannel, type: "text", reason: "logging new channel"})
+          guild.channels.create("Bot Commands", { parent: textChannel, type: "text", reason: "logging new channel"})
           guild.channels.create("Homework Chat (voice)", { parent: voiceChannel, type: "voice", reason: "logging new channel"})
+          guild.channels.create("One-To-One", { parent: voiceChannel, type: "voice", reason: "logging new channel"})
             .then(console.log)
             .catch(console.error);
+
           //  client.channels.get("<ID of the channel you want to send to>").send("<your message content here>")
           //client.channels.get(welcomeChannel).send("Your message");
           message.reply("completed channel creation");
@@ -267,9 +274,25 @@ async function main(){
       }
       else if (command === "topics"){
          if (message.member.roles.cache.find(r=>r.name==="Administrator")){
-           message.reply("good");
-         }else{
-           message.reply("bad");
+           message.reply("Collecting your topics now.\n type end to stop.");
+           const collector = new Discord.MessageCollector(message.channel, m => m.author.id === message.author.id, { time: 90000 });
+           console.log(collector)
+           collector.on('collect', message =>{
+             if (message.content.toUpperCase() != "END"){
+               message.reply("collected " +message.content);
+               const argument = message.content;
+               const msg = argument.toLowerCase();
+               topics.push(argument);
+             }
+             else{
+               message.channel.send("Those topics are now noted and looked for");
+               collector.stop();
+               topics.forEach(element => console.log(element));
+             }
+
+          });
+         } else{
+           message.reply("You cannot use this command as you're not the tutor");
          }
       }
 
