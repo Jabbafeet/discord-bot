@@ -5,6 +5,7 @@ const client = new Discord.Client();
 const goodMsg = [];
 const badMsg = [];
 const topics = [];
+const topicsIn = [];
 const dbName = "discordBot";
 const prefix = "!";
 const uri = config.URI;
@@ -15,8 +16,18 @@ var voiceChannel = '';
 var textChannel = '';
 var i = 0;
 var wG = null;
+var foundTopic = null;
+var dbTopic;
+var contents;
 var creationBool = false;
 client.login(config.BOT_TOKEN);
+
+/*****
+****** Name: Discord Bot
+****** Function: Talking to the database and collecting messages from students for statistics on dashboard
+****** Creator: Karl Roche
+****** Last Update: 22:16 22/04/2021
+******/
 
 async function main(){
   try {
@@ -44,7 +55,7 @@ async function main(){
     const guild = message.guild;
     if(message.author.bot) return; //Looks to see if the author of message is another bot, If it is dont go any further
 
-    message.guild.channels.cache.forEach((val, inx) =>{
+    message.guild.channels.cache.forEach((val, inx) =>{ //checks number of channels to gauge if the server has been created or not, later on checks bool.
        i++;
        console.log("" + i);
     })
@@ -58,7 +69,7 @@ async function main(){
       i=0;
     }
 
-    //Gets IDs for both channel headings to create channels later
+    //Gets IDs for both channel headings to create channels later (UNUSED)
   /*  message.guild.channels.cache.forEach((val, inx) =>{
       const channelName = val.name;
 
@@ -76,68 +87,98 @@ async function main(){
     console.log(messageAuthor);
     if (!message.content.startsWith(prefix)){
       const argument = message.content;
-      //const argument = message.content.split (' ');
       const msg = argument.toLowerCase();
 
       if (msg.includes("give")){
-        if (msg.includes("help give")){
+        /*if (msg.includes("help give")){
           return;
-        }
+        }*/
         switchArg="give";
         console.log("User: " + messageAuthor + " wants: " + switchArg);
         }
         else if (msg.includes("help")){
-        if (msg.includes("help give")){
+        /*if (msg.includes("help give")){
           return;
-        }
+        }*/
         switchArg="help";
         console.log("User: " + messageAuthor + " wants: " + switchArg);
       }
 
       switch (switchArg) {
           case 'help':
-          message.reply('Youve indicated that you wanted help.');
+          //message.reply('Youve indicated that you wanted help.');
           goodMsg.push(argument); //adds this message's content to an array. This will be used later to send information to a database for the app(React Page) to read
           wG = true;
           break;
 
           case 'give':
-          message.reply('You have indicated you are giving help.');
+          //message.reply('You have indicated you are giving help.');
           badMsg.push(argument);
           wG = false;
           break;
         }
+		
+	  contents = message.content.toLowerCase(); //sets contents
+	  var dbChannel= message.channel.name; //sets channel name from message for later
 
-
-      if (msg.includes("give") || msg.includes("help") || topics.indexOf(message.content) !=-1){
+	  topicLength = topics.length;
+	  while (topicLength >= -1){
+		  console.log("topiclength: " +topicLength);
+		  
+		  if (contents.indexOf(topics[topicLength])!=-1){
+			  foundTopic = true;
+			  console.log("I'm in the while loop iteration: " + topicLength);
+			  console.log("topic found " + topics[topicLength]);
+			  dbTopic = topics[topicLength]; 
+			  break;		
+		  }else if (topicLength == -1){
+			  console.log("inside of the else, Topic length ---1");
+			  dbTopic = "none";
+			  foundTopic = false;
+			  break;
+		  }
+		  topicLength = topicLength - 1;  
+		  
+	  }
+	
+      if (foundTopic || msg.includes("give") || msg.includes("help")){
           const db = mClient.db(dbName);
           const col = db.collection("discordBot");
           console.log("in writeDB");
-          let userMessage = {
-            "username": messageAuthor,
-            "message": msg,
-            "give/help": wG,
-            "topic": topics[topics.indexOf(message.content)]
-            //"channel":
-          }
+		  
+		  
+		let userMessage = {
+			"username": messageAuthor,
+			"message": msg,
+			"give/help": wG,
+			"topic": dbTopic,
+			"channel": dbChannel
+		 }
+
+		  
           const p = col.insertOne(userMessage);
           console.log(userMessage);
           wG = null;
         }
 
        }
+	   
        //ELSE GO TO COMMANDS (!commands)
        else {
       const commandBody = message.content.slice(prefix.length);
       const args = commandBody.split(' '); //splits up the string to find command/etc
       const command = args.shift().toLowerCase(); //moves everything to lower case
+	  
+	  if (command === "commands" || command === "help"){
+		  message.reply("Hi there, Thanks for using the student dashboard collection bot\n**The commands to use this bot are as follows.**\n**!history** : This command will show all messages gotten locally (Debug)\n**!database** : this command will look for all documents in the database and return them here (Debug)\n**!buildserver** : If you're new you should use this, This will allow the bot to build up your server. The bot will work without but it will work better with its own hierarchy. Please delete all but one channel before using this command\n**!topics** : This command will allow you to enter custom topics for the bot to find and use in its collection and sending to the DB\n**!purge** : this command will allow you to remove ALL entries from the database to start again");
+	  }
 
-      if (command === "history"){
+      else if (command === "history"){
         if (goodMsg != 0 && badMsg != 0){
           message.reply("messages that need help:");
           message.channel.send(goodMsg.map((message) => `${message}\n`)); //returns all in array
           message.channel.send("And here's the people that give help:\n")
-          message.channel.send(badMsg.map((message) => `${message}\n`)); //rturns all in array
+          message.channel.send(badMsg.map((message) => `${message}\n`)); //returns all in array
         }else{
           message.channel.send("The internal volatile array is empty.");
         }
@@ -225,13 +266,11 @@ async function main(){
             .then(console.log)
             .catch(console.error);
 
-          //  client.channels.get("<ID of the channel you want to send to>").send("<your message content here>")
-          //client.channels.get(welcomeChannel).send("Your message");
           message.reply("completed channel creation");
           message.channel.delete();
           creationBool = true;
         } else if (creationBool) {
-          message.reply("already created channels here, Or you have set the channel up already\n If you'd like to have the bot make them automatically please delete all channels and use !buildserver");
+          message.reply("already created channels here, Or you have set the channel up already\nIf you'd like to have the bot make them automatically please delete all channels and use !buildserver");
         } else{
           message.reply("uhoh");
         }
@@ -272,17 +311,29 @@ async function main(){
         })
         //const col= db.collection("discordBot");
       }
-      else if (command === "topics"){
+      else if (command === "topics"){ //If command = topics allow admin/tutor to listt the topics they'd like to use
          if (message.member.roles.cache.find(r=>r.name==="Administrator")){
            message.reply("Collecting your topics now.\n type end to stop.");
            const collector = new Discord.MessageCollector(message.channel, m => m.author.id === message.author.id, { time: 90000 });
            console.log(collector)
            collector.on('collect', message =>{
              if (message.content.toUpperCase() != "END"){
-               message.reply("collected " +message.content);
-               const argument = message.content;
-               const msg = argument.toLowerCase();
-               topics.push(argument);
+				 if(new RegExp(topics.join("|")).test(contents)){ //if RegExp finds that messages match whats in topics, will not let user put a duplicate in
+					 if (topics.length !=0){
+						message.reply("This topic was already collected, please use another or end to finish.");
+					 }
+					 else {
+						 message.reply("collected " +message.content);
+						 const argument = message.content;
+						 const msg = argument.toLowerCase();
+						 topics.push(msg);
+					}
+				 } else {
+					 message.reply("collected " +message.content);
+					 const argument = message.content;
+					 const msg = argument.toLowerCase();
+					 topics.push(msg);
+				 }
              }
              else{
                message.channel.send("Those topics are now noted and looked for");
