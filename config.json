@@ -1,5 +1,6 @@
 {
   "BOT_TOKEN": "Nzk4MjA3OTQzNTM1MzYyMDgx.X_xrEw.UGq19lDGZQ_wvexZBhrHwrXuTkY",
   "URI": "mongodb+srv://Karl:discord@cluster0.c2iuu.mongodb.net/test",
-  "WELCOME_MESSAGE": "Welcome to the server, This bot is made to create the server and monitor questions and help given to help gauge how students are doing."
+  "WELCOME_MESSAGE": "Welcome to the server, This bot is made to create the server and monitor questions and help given to help gauge how students are doing.",
+  "DICTIONARY":["broken","issue","problem","help","error","error code","exiting with error"]
 }
